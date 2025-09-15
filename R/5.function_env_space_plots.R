@@ -24,7 +24,6 @@ combPlot <- envs1_plot + envs2_plot + envs3_plot
 ggsave('envSpacePlots.png', combPlot, height = 6, width = 15, dpi = 600)
 }
 
-
 hist(myPCA$scores[, pcaAxis],
      breaks = ncol(env_space),
      freq = F,
@@ -45,7 +44,7 @@ hist(coords_All[, pcaAxis],
      border = FALSE)
 lines(density(na.omit(coords_All[, pcaAxis])), col = "red", lwd = 2)
 
-#### histograms
+#### histograms #####
 d2 <- as.data.frame(myPCA$scores[, 2])
 D2_plot <- ggplot(d2) +
   aes(x = `myPCA$scores[, 2]`) +
@@ -71,60 +70,97 @@ ggdraw() +
   draw_plot(aligned[[1]], x = 0, y = 0, width = 0.2, height = 0.8) +
   draw_plot(aligned[[2]], x = 0.2, y = 0, width = 0.8, height = 0.8)
 
-env_space_plot_with_histograms <- function(rdata, title) {
-  # Convertir raster a data frame
-  rdf <- as.data.frame(stack[[1]], xy = TRUE)
-  var_name <- names(stack[[1]])[1]
+# env_space_plot_with_histograms <- function(rdata, title) {
+#   # Convertir raster a data frame
+#   rdf <- as.data.frame(stack[[1]], xy = TRUE)
+#   var_name <- names(stack[[1]])[1]
+#
+#   main_plot <- ggplot(rdf, aes(x = x, y = y)) +
+#     geom_raster(aes(fill = .data[[var_name]])) +
+#     scale_fill_viridis_c(na.value = "transparent", name = var_name) +
+#     ggtitle('title') +
+#     scale_y_continuous(labels = simple_labels) +
+#     scale_x_continuous(labels = simple_labels) +
+#     theme_minimal() +
+#     theme(
+#       plot.margin = margin(t = 40, r = 40, b = 40, l = 40),
+#       legend.position = 'none'
+#     )
+#   ext <- ext(rdata)
+#   x_limits <- c(ext$xmin, ext$xmax)
+#   y_limits <- c(ext$ymin, ext$ymax)
+#   # Gráfico de densidad para el eje X
+#   x_density <- ggplot(rdf, aes(x = x)) +
+#     geom_density(fill = "blue", alpha = 0.3, color = "darkblue", linewidth = 0.8) +
+#     scale_x_continuous(limits = x_limits) +
+#     theme_void() +
+#     theme(plot.margin = margin(t = 0, r = 40, b = 0, l = 40))
+#
+#   # Gráfico de densidad para el eje Y
+#   y_density <- ggplot(rdf, aes(x = y)) +
+#     geom_density(color = "black", fill="grey", linewidth = 0.8) +
+#     scale_x_continuous(limits = y_limits) +
+#     theme_void() +
+#     theme(plot.margin = margin(t = 0, r = 40, b = 0, l = 40)) +
+#     coord_flip()
+#
+#   aligned_plots <- align_plots(
+#     main_plot, y_density, x_density,
+#     align = "hv",
+#     axis = "tblr"
+#   )
+#   # Combinar todo
+#   plot_grid(
+#     main_plot,
+#     y_density,
+#     x_density,
+#     NULL,
+#     nrow = 2, ncol = 2,
+#     rel_widths = c(4, 1),
+#     rel_heights = c(4,1),
+#     align = "hv", axis = "tblr"
+#   )
+# }
+#
+# envs1_plotb <- env_space_plot_with_histograms(stack[[1]], "Madagascar environmental space")
+# ggplot(rdf, aes(x = x)) +
+#   geom_density(fill = "blue", alpha = 0.3, color = "darkblue", linewidth = 0.8) +
+#   theme_void() +
+#   theme(plot.margin = margin(t = 0, r = 0, b = 0, l = 0))
 
-  main_plot <- ggplot(rdf, aes(x = x, y = y)) +
-    geom_raster(aes(fill = .data[[var_name]])) +
-    scale_fill_viridis_c(na.value = "transparent", name = var_name) +
-    ggtitle('title') +
-    scale_y_continuous(labels = simple_labels) +
-    scale_x_continuous(labels = simple_labels) +
-    theme_minimal() +
-    theme(
-      plot.margin = margin(t = 40, r = 40, b = 40, l = 40),
-      legend.position = 'none'
-    )
-  ext <- ext(rdata)
-  x_limits <- c(ext$xmin, ext$xmax)
-  y_limits <- c(ext$ymin, ext$ymax)
-  # Gráfico de densidad para el eje X
-  x_density <- ggplot(rdf, aes(x = x)) +
-    geom_density(fill = "blue", alpha = 0.3, color = "darkblue", linewidth = 0.8) +
-    scale_x_continuous(limits = x_limits) +
-    theme_void() +
-    theme(plot.margin = margin(t = 0, r = 40, b = 0, l = 40))
+## rarity ####
+hist(area_values01,
+     breaks = ncol(env_space),
+     freq = FALSE, col = "grey",
+     main = "",
+     xlab = "Climate rarity", border = FALSE,
+     ylim = c(0, 4),
+     font = 2, font.lab = 2,
+     cex.lab = 1.6, cex.axis = 1.6)
+lines(density(na.omit(area_values01)), col = "black", lwd = 2)
 
-  # Gráfico de densidad para el eje Y
-  y_density <- ggplot(rdf, aes(x = y)) +
-    geom_density(color = "black", fill="grey", linewidth = 0.8) +
-    scale_x_continuous(limits = y_limits) +
-    theme_void() +
-    theme(plot.margin = margin(t = 0, r = 40, b = 0, l = 40)) +
-    coord_flip()
+hist(area_values01[surface > 0],
+     breaks = 5,
+     freq = FALSE,
+     add = TRUE,
+     col = rgb(0, 1, 0, .5),
+     border = FALSE)
+lines(density(na.omit(area_values01[surface > 0])), col = "lightgreen", lwd = 2)
 
-  aligned_plots <- align_plots(
-    main_plot, y_density, x_density,
-    align = "hv",
-    axis = "tblr"
-  )
-  # Combinar todo
-  plot_grid(
-    main_plot,
-    y_density,
-    x_density,
-    NULL,
-    nrow = 2, ncol = 2,
-    rel_widths = c(4, 1),
-    rel_heights = c(4,1),
-    align = "hv", axis = "tblr"
-  )
-}
+rarity_env <- env_space
+values(rarity_env) <- area_values01
+rarity_Percell <- raster::extract(rarity_env, v4)
+rarity_map <- r
+values(rarity_map) <- rarity_Percell
 
-envs1_plotb <- env_space_plot_with_histograms(stack[[1]], "Madagascar environmental space")
-ggplot(rdf, aes(x = x)) +
-  geom_density(fill = "blue", alpha = 0.3, color = "darkblue", linewidth = 0.8) +
-  theme_void() +
-  theme(plot.margin = margin(t = 0, r = 0, b = 0, l = 0))
+cols <- colorRampPalette(c('#e0f3db','#a8ddb5','#43a2ca'))
+x11()
+plot(rarity_map,
+     col = cols(10),
+     font = 2, font.lab = 2,
+     ylim = c(ymin(base), ymax(base)),
+     xlim = c(xmin(base), xmax(base))
+)
+maps::map(base, add = TRUE)
+points(WS_cent, col = rgb(1, 0, 0, .5), pch = 19, cex = 1)
+
