@@ -1,26 +1,31 @@
-# Packages ---------------------------------------------------------
-setup_packages <- function(packages) {
-  installed <- installed.packages()
-  to_install <- packages[!packages %in% installed]
-  if (length(to_install) > 0) {
-    message("Installing packages: ", paste(to_install, collapse = ", "))
-    install.packages(to_install)
-  }
-  invisible(lapply(packages, library, character.only = TRUE))
-}
-# Required packages
-required_pkgs <- c('data.table', 'string', 'tidyverse', 'KnowBR', 'sf', 'terra',
-                   'rnaturalearth', 'ggplot2', 'svglite', 'patchwork', 'here',
-                   'ggExtra', 'biscale', 'cowplot', 'tidyterra')
 
-
-# Setup packages
-setup_packages(required_pkgs)
 # Use here package for file paths
 # All file paths should use here::here("folder", "file.ext")
 cat("Project directory:", here::here(), "\n")
 
-
 study_area_pol <- ne_countries(country = c(""), scale = "large", returnclass = "sf")
 data <- fread('.csv')
 inventory_completeness()
+
+# Climatic coverage
+# Load Climate data #####
+rlist <- list.files(pattern = "*.tif$")
+climRaster <- rast(rlist)
+raster_mask <- mask(climRaster, study_area_pol)
+raster_mask <- crop(raster_mask, study_area_pol)
+
+# Now aggregate raster cells to your study resolution
+r <- raster_mask[[1]] # extract 1 raster to check resolution of cells
+res(r) # cell res
+climRaster_res <- aggregate(raster_mask, fact = 1, fun = mean) # aggregation = x12
+# setwd(wd)
+# saveRDS(climRaster_res, 'climaticCoverage/climRaster_res')
+# climRaster_res <- readRDS('climaticCoverage/climRaster_res')
+r <- climRaster_res[[1]] # extract 1 raster to check NEW resolution of cells
+res <- res(r)
+
+# WS_cent <- fread('centroides.csv', sep = ";")
+env_space_calc(env_space_res = 0.1, replications = 1000)
+
+rarity_calc()
+

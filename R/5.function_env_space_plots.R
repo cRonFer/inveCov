@@ -1,4 +1,8 @@
-
+# Plot PCA and save
+# png("PCAbiplot.png", width = 900, height = 900)
+# biplot.psych(myPCA, xlim.s= c(-2,4), ylim.s= c(-3,2), main='Biplot PCA - Madagascar at 0.1') # change limits to plot the whole pca
+# dev.off()
+env_space_plot <- function(){
 # Environmental space plots
 my_window <- ext(stack) # Env. space limits
 ## functions ####
@@ -18,6 +22,28 @@ envs2_plot <- env_space_plot(stack[[2]], "Occurrences environmental space")
 envs3_plot <- env_space_plot(stack[[3]], "Well survey cells environmental space")
 combPlot <- envs1_plot + envs2_plot + envs3_plot
 ggsave('envSpacePlots.png', combPlot, height = 6, width = 15, dpi = 600)
+}
+
+
+hist(myPCA$scores[, pcaAxis],
+     breaks = ncol(env_space),
+     freq = F,
+     col = "grey",
+     border = FALSE,
+     xlim= c(xmin, xmax),
+     ylim = c(ymin, ymax),
+     main = "",
+     xlab = "PC1",
+     font = 2, font.lab = 2,
+     cex.lab = 1.2, cex.axis = 1.2)
+lines(density(na.omit(myPCA$scores[, pcaAxis])), col = "black", lwd = 2)
+
+hist(coords_All[, pcaAxis],
+     add = TRUE,
+     col = rgb(1, 0, 0, .5),
+     freq = F,
+     border = FALSE)
+lines(density(na.omit(coords_All[, pcaAxis])), col = "red", lwd = 2)
 
 #### histograms
 d2 <- as.data.frame(myPCA$scores[, 2])

@@ -1,5 +1,4 @@
 ## Functions ####
-
 #1 Calculate inventory completeness using KnowBR ####
 inventory_completeness <- function(data = data,
                                    dir_e = 'invComplAnalysis',
@@ -9,7 +8,48 @@ inventory_completeness <- function(data = data,
                                    Ratio_t = 5,
                                    Slope_t = 0.1,
                                    Completeness_t = 75,
-                                   crs <- 4326){
+                                   crs = 4326){
+  # Plot map of occurrences by Gen information ####
+  occ_gen_map <- function(data1, title){
+    map_points <- ggplot() +
+      geom_sf(data= study_area_pol, fill = 'lightgrey', color = "lightgrey", linewidth = 0.7) +
+      geom_sf(data = grid, fill = "transparent", color = "black") +
+      geom_sf(data = data1, color = 'purple') +
+      # geom_sf(data = data2, color = 'orange') +
+      coord_sf(crs = crs) +
+      ggtitle(title) +
+      theme_minimal() +
+      theme(plot.background = element_rect(fill = 'white', color = 'white'))
+  }
+  # Plot completeness estimators for establishing threshold of well-surveyed cells ----
+  threshold_plot <- function(var, x, xtitle){
+    ggplot(est) +
+      geom_point(aes(var, Completeness), pch = 19, size = 1) +
+      geom_vline(xintercept = x, col = 'red3', lwd = 1, lty = 2) +
+      geom_hline(yintercept = 75, col = 'grey', lwd = 1, lty = 2) + # Here completeness threshold =70%
+      theme_minimal() +
+      ylab('') +
+      xlab(xtitle) +
+      theme(strip.text.y = element_blank(),
+            axis.text = element_text(size = 10, face = "bold"),
+            axis.title = element_text(size = 10, face = "bold"))
+  }
+  #. 4. Plot of inv. completeness values map
+  complt_plotMap <- function(comp_shp,estWS, title){
+    ggplot() +
+      geom_sf(data = study_area_pol, fill = 'lightgrey', color = 'darkgrey') +
+      geom_sf(data = comp_shp, aes(fill = Completeness), color = "transparent") +
+      geom_sf(data = estWS, fill = 'transparent', color = "black", linewidth = 1) +
+      scale_fill_viridis_c(limits = c(0, 100), option = "plasma", name = "",
+                           direction = -1) +
+      theme_minimal() +
+      labs(title = title)+
+      theme(plot.background = element_rect(fill = "white", color = "transparent"),
+            legend.position = "none",
+            plot.title = element_text(size = 16, face = "bold", hjust = 1.1))
+  }
+
+
 
   # Study area shpfiles
   study_area_pol_crs <- st_transform(study_area_pol, crs)
@@ -75,50 +115,10 @@ inventory_completeness <- function(data = data,
 
   # Extract centroids of Well Survey cells for the environmental Space analysis
   WS_cent <- st_centroid(estWS)
-  WS_cent <- WS_cent %>% dplyr::mutate(lon = sf::st_coordinates(.)[,1],
+  WS_cent_dt <- WS_cent %>% dplyr::mutate(lon = sf::st_coordinates(.)[,1],
                                        lat = sf::st_coordinates(.)[,2]) %>%
     dplyr::select(c(cell_id, lon, lat))
-  WS_cent$geometry <- NULL
-  fwrite(WS_cent, '_centroids.csv', sep = ";")
-}
-
-# 2. Plot map of occurrences by Gen information ####
-occ_gen_map <- function(data1, title){
-  map_points <- ggplot() +
-    geom_sf(data= study_area_pol, fill = 'lightgrey', color = "lightgrey", linewidth = 0.7) +
-    geom_sf(data = grid, fill = "transparent", color = "black") +
-    geom_sf(data = data1, color = 'purple') +
-    # geom_sf(data = data2, color = 'orange') +
-    coord_sf(crs = crs) +
-    ggtitle(title) +
-    theme_minimal() +
-    theme(plot.background = element_rect(fill = 'white', color = 'white'))
-}
-# 3. Plot completeness estimators for establishing threshold of well-surveyed cells ----
-threshold_plot <- function(var, x, xtitle){
-  ggplot(est) +
-    geom_point(aes(var, Completeness), pch = 19, size = 1) +
-    geom_vline(xintercept = x, col = 'red3', lwd = 1, lty = 2) +
-    geom_hline(yintercept = 75, col = 'grey', lwd = 1, lty = 2) + # Here completeness threshold =70%
-    theme_minimal() +
-    ylab('') +
-    xlab(xtitle) +
-    theme(strip.text.y = element_blank(),
-          axis.text = element_text(size = 10, face = "bold"),
-          axis.title = element_text(size = 10, face = "bold"))
-}
-#. 4. Plot of inv. completeness values map
-complt_plotMap <- function(comp_shp,estWS, title){
-  ggplot() +
-    geom_sf(data = study_area_pol, fill = 'lightgrey', color = 'darkgrey') +
-    geom_sf(data = comp_shp, aes(fill = Completeness), color = "transparent") +
-    geom_sf(data = estWS, fill = 'transparent', color = "black", linewidth = 1) +
-    scale_fill_viridis_c(limits = c(0, 100), option = "plasma", name = "",
-                         direction = -1) +
-    theme_minimal() +
-    labs(title = title)+
-    theme(plot.background = element_rect(fill = "white", color = "transparent"),
-          legend.position = "none",
-          plot.title = element_text(size = 16, face = "bold", hjust = 1.1))
+  WS_cent_dt$geometry <- NULL
+  fwrite(WS_cent_dt, '_centroids.csv', sep = ";")
 }
 
