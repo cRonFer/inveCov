@@ -1,5 +1,4 @@
 ## Functions ####
-#1 Calculate inventory completeness using KnowBR ####
 inventory_completeness <- function(data = data,
                                    dir_e = 'invComplAnalysis',
                                    resolution = 30, # grid resolution
