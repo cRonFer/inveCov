@@ -11,6 +11,6 @@ plot(out)
 
 proj <- project_bias(out)
 map_bias(proj)
-map_bias(proj, type='diff_to_max')
-map_bias(proj, type='log_sampling_rate')
+map_bias(proj, type = 'diff_to_max')
+map_bias(proj, type = 'log_sampling_rate')
 

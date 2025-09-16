@@ -23,13 +23,32 @@ rarity_calc <- function( ){
   x_kw <- c(area_values01, area_values01[surface > 0])
   g_kw <- as.factor(c(rep("area", length(area_values01)),
                         rep("ws", length(area_values01[surface > 0]))))
-  kruskal.test(x_kw ~ g_kw)
+  save_kruskal_csv(x_kw ~ g_kw, "rarity_kruskalWallis_stats.txt")
   # Kolmogorov smirnov test
-  area_values03 <- (na.omit(area_values01))
-  area_values04 <- (na.omit(area_values01[surface > 0]))
-  ks.test(area_values03, area_values04)
-  # This result indicates that the under-sampled area is composed
-  # mainly by rare climates. You can inspect the environmental space figures
-  # to check which areas were not sampled.
-  rarity_plot()
+  area_values03 <- na.omit(area_values01)
+  area_values04 <- na.omit(area_values01[surface > 0])
+  writeLines(capture.output(
+    ks.test(area_values03, area_values04)),
+    paste('Axis', pcaAxis, "rarity_ks_two_sample.txt"))
+
+
+  # Finally MAP the climatic rarity
+  rarity_env <- env_space
+  values(rarity_env) <- area_values01
+  rarity_Percell <- extract(rarity_env, v4)
+  rarity_map <- climRaster_res[[1]]
+  values(rarity_map) <- rarity_Percell
+
+  rarity_plotMap <- function(){
+    ggplot() +
+      geom_spatraster(data = rarity_map, aes(fill = chelsa_ai_1981_2010_last)) +
+      geom_sf(data = estWS, fill = 'transparent', color = "black", linewidth = 1) +
+      theme_minimal() +
+      labs(title = 'Rarity map')+
+      theme(plot.background = element_rect(fill = "white", color = "transparent"),
+            legend.position = "none",
+            plot.title = element_text(size = 16, face = "bold", hjust = 1.1))
+  }
+  rarity_plotMap()
+
 }

@@ -5,10 +5,19 @@ cat("Project directory:", here::here(), "\n")
 
 study_area_pol <- ne_countries(country = c("Madagascar"), scale = "large", returnclass = "sf")
 data <- fread('Data/Frogs.csv', sep=';')
-inventory_completeness()
+inventory_completeness(data = data,
+                       dir_e = 'invComplAnalysis',
+                       resolution = 1, # grid resolution
+                       cell_shape = 'square', # shape of cell ('hex', 'square') if NA square
+                       Records_t = 15,
+                       Ratio_t = 5,
+                       Slope_t = 0.1,
+                       Completeness_t = 75,
+                       crs = 4326)
 
 # Climatic coverage
 # Load Climate data #####
+setwd("C:/Users/Joaquin Hortal/Desktop/gis_layers/CHELSA_10km")
 rlist <- list.files(pattern = "*.tif$")
 climRaster <- rast(rlist)
 raster_mask <- mask(climRaster, study_area_pol)
@@ -25,7 +34,7 @@ r <- climRaster_res[[1]] # extract 1 raster to check NEW resolution of cells
 res <- res(r)
 
 # WS_cent <- fread('centroides.csv', sep = ";")
-env_space_calc(env_space_res = 0.1, replications = 1000)
+env_space_calc(env_space_res = 0.1, replications = 500)
 
 rarity_calc()
 

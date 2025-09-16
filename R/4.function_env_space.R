@@ -1,5 +1,6 @@
 env_space_calc <- function(env_space_res,
-                           replications){
+                           replications,
+                           rarity_test = FALSE){
 # Standardization of the variables (Normalization - Mean= 0 and Std= 1)
 std <- function(x){(x - mean(x, na.rm = T)) / sd(x, na.rm = T)}
 # Schoener's D: quantifies the overlap between the location of well-sampled
@@ -12,6 +13,25 @@ SchoenersD <- function(x, y) {
   sub_values <- abs(x - y)
   D <- 1 - (sum(sub_values, na.rm = TRUE) / 2)
   return(D)
+}
+
+# Function to extract and save test statistics
+save_kruskal_csv <- function(formula, filename = "kruskal_stats.txt"){
+  result <- kruskal.test(formula)
+  # Create data frame with results
+  results_df <- data.frame(
+    Test = deparse(formula),
+    Chi_squared = result$statistic,
+    DF = result$parameter,
+    P_value = result$p.value,
+    Method = result$method,
+    StringsAsFactors = FALSE
+  )
+
+  # Save to CSV
+  write.csv(results_df, filename, row.names = FALSE)
+  message(paste("Results saved to:", filename))
+  return(results_df)
 }
 # PCA  ####
 # First we can reduce the variables to fewer variables using a PCA.
@@ -29,7 +49,7 @@ myPCA <- principal(PCAdata2,
             nfactors = 2,
             rotate = "varimax",
             scores = T)
-prop.table(myPCA$values)
+# prop.table(myPCA$values)
 
 # Values of PCA of our study area ####
 # Instead of assuming the absolute values of all Worldclim variables,
@@ -72,8 +92,9 @@ values(env_space_area) <- area_values
 stack <- env_space_area
 
 # Env. Space of all occurrences of order
+data_points <- vect(data_points)
 values_All <- cells(climRaster_res,
-                        datapoints)[, 2]
+                        data_points)[, 2]
 coords_All <- v4[values_All, ]
 cell_All <- extract(env_space,
                     coords_All,
@@ -88,7 +109,6 @@ names(stack[[1]]) <- 'Study area'
 names(stack[[2]]) <- 'Species Occurrences'
 
 # Well surveyed cells #########
-WS_cent <- vect(WS_cent)
 # Env. Space of all occurrences of order
 values_WS <- cells(climRaster_res, WS_cent)[, 2]
 coords_WS <- v4[values_WS, ]
@@ -102,8 +122,10 @@ env_space_WS[env_space_WS == 0] <- NA
 all_WS <- unique(cell_WS)
 stack <- c(stack, env_space_WS) # Join the new raster from order
 names(stack[[3]]) <- 'Well Surveyed cells'
+
+# Plot environmental spaces
 env_space_plot()
-# Schoener's D #######################################
+# Schoener's D ####
 # Transform the abundance of each cell into probabilities.
 # Relative frequency of climate type for all the study area
 area_values <- area_values/sum(area_values, na.rm = TRUE)
@@ -121,7 +143,7 @@ print(paste("Climate overlap between well-sampled cells and the study area,
 # records.
 set.seed(0)
 D_rnd <- numeric(replications)
-for (i in 1:replications) {
+for (i in 1:replications){
   rnd <- sample(env_space_v, length(data), replace = TRUE)
   n_rnd <- table(rnd)
   env_space_rnd <- env_space
@@ -136,19 +158,24 @@ for (i in 1:replications) {
 p <- (sum(D > D_rnd) + 1) / (length(D_rnd) + 1) # Unicaudal test
 print(paste("p value equals = ", round(p, 3)))
 
-# Kruskal-Wallis test ####
-# The following map shows the distribution of well-sampled cells (red bars)
-# vs the study area cells (gray bars)
+# Kruskal-Wallis and kolmogorov Smirnov tests ####
 for (pcaAxis in 1:2){
-# X axis is a probability density
-# Kruskal-Wallis verifies whether 1) the distribution of well-sampled sites
-# is an unbiased subset of the entire climate conditions of the Atlantic forest.
-# If this is so, p > 0.05
-x_axis <- c(myPCA$scores[, pcaAxis], coords_WS[, pcaAxis])
-g_axis <- as.factor(c(rep("area", length(myPCA$scores[, pcaAxis])),
-                   rep("WS", length(coords_WS[, pcaAxis]))))
-kruskal.test(x_axis ~ g_axis)
-# Kolmogorov smirnov test###
-ks.test(myPCA$scores[, pcaAxis], coords_WS[, pcaAxis])
+  # X axis is a probability density
+  # Kruskal-Wallis verifies whether 1) the distribution of well-sampled sites
+  # is an unbiased subset of the entire climate conditions of the Atlantic forest.
+  # If this is so, p > 0.05
+  x_axis <- c(myPCA$scores[, pcaAxis], coords_WS[, pcaAxis])
+  g_axis <- as.factor(c(rep("area", length(myPCA$scores[, pcaAxis])),
+                     rep("WS", length(coords_WS[, pcaAxis]))))
+  stats_df <- save_kruskal_csv(x_axis ~ g_axis,
+                               paste('Axis', pcaAxis,"kruskalWallis_stats.txt"))
+  # Kolmogorov smirnov test###
+  writeLines(capture.output(
+   ks.test(myPCA$scores[, pcaAxis], coords_WS[, pcaAxis])),
+      paste('Axis', pcaAxis, "ks_two_sample.txt"))
+}
+
+if rarity_test TRUE{
+  rarity_calc()
 }
 }
