@@ -1,7 +1,7 @@
 ## Functions ####
 inventory_completeness <- function(data = data,
                                    dir_e = 'invComplAnalysis',
-                                   resolution = 30, # grid resolution
+                                   resolution = 100, # grid resolution
                                    cell_shape = NULL,  # shape of cell ('hex', 'square') if NA square
                                    Records_t = 15,
                                    Ratio_t = 5,
@@ -11,7 +11,7 @@ inventory_completeness <- function(data = data,
   # Plot map of occurrences by Gen information ####
   occ_gen_map <- function(data1, title){
     map_points <- ggplot() +
-      geom_sf(data= study_area_pol, fill = 'lightgrey', color = "lightgrey", linewidth = 0.7) +
+      geom_sf(data = study_area_pol, fill = 'lightgrey', color = "lightgrey", linewidth = 0.7) +
       geom_sf(data = grid, fill = "transparent", color = "black") +
       geom_sf(data = data1, color = 'purple') +
       # geom_sf(data = data2, color = 'orange') +
@@ -49,8 +49,7 @@ inventory_completeness <- function(data = data,
   }
 
 
-
-  # Study area shpfiles
+ # Study area shpfiles
   study_area_pol_crs <- st_transform(study_area_pol, crs)
   data(adworld) # knowBR needs add world polygon to work
 

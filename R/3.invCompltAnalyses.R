@@ -3,8 +3,8 @@
 # All file paths should use here::here("folder", "file.ext")
 cat("Project directory:", here::here(), "\n")
 
-study_area_pol <- ne_countries(country = c(""), scale = "large", returnclass = "sf")
-data <- fread('.csv')
+study_area_pol <- ne_countries(country = c("Madagascar"), scale = "large", returnclass = "sf")
+data <- fread('Data/Frogs.csv', sep=';')
 inventory_completeness()
 
 # Climatic coverage

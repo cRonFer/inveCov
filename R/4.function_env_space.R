@@ -1,5 +1,5 @@
-env_space_calc <- function(env_space_res = env_space_res,
-                           replications = replications){
+env_space_calc <- function(env_space_res,
+                           replications){
 # Standardization of the variables (Normalization - Mean= 0 and Std= 1)
 std <- function(x){(x - mean(x, na.rm = T)) / sd(x, na.rm = T)}
 # Schoener's D: quantifies the overlap between the location of well-sampled
@@ -136,7 +136,7 @@ for (i in 1:replications) {
 p <- (sum(D > D_rnd) + 1) / (length(D_rnd) + 1) # Unicaudal test
 print(paste("p value equals = ", round(p, 3)))
 
-#Kruskal-Wallis test ####
+# Kruskal-Wallis test ####
 # The following map shows the distribution of well-sampled cells (red bars)
 # vs the study area cells (gray bars)
 for (pcaAxis in 1:2){
