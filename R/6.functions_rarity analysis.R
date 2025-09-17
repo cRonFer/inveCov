@@ -31,7 +31,6 @@ rarity_calc <- function( ){
     ks.test(area_values03, area_values04)),
     paste('Axis', pcaAxis, "rarity_ks_two_sample.txt"))
 
-
   # Finally MAP the climatic rarity
   rarity_env <- env_space
   values(rarity_env) <- area_values01

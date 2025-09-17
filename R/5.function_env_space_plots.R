@@ -7,160 +7,101 @@ env_space_plot <- function(){
 my_window <- ext(stack) # Env. space limits
 ## functions ####
 simple_labels <- function(x) {format(round(x, 1), nsmall = 1)} # Rounds to 1 decimal place
-env_space_plot <- function(rdata, title){
+envspace_palette <- colorRampPalette(c("#495970", "#6C7B8B", "#8DB6CD", "#FFB6C1", "#F08080"))
+env_space_gradient_colors <- envspace_palette(100)
+env_space_plot <- function(rdata, pal_col){
   ggplot() +
     geom_spatraster(data = rdata, aes(fill = after_stat(value))) +
-    scale_fill_viridis_c(na.value = "transparent", name = names(rdata)[1]) +
-    ggtitle(title) +
+    scale_fill_gradientn(colours = pal_col,
+                         na.value = "transparent", name = '') +
     scale_y_continuous(labels = simple_labels) +
     scale_x_continuous(labels = simple_labels) +
     theme_minimal()
 }
 ### Env space comparison (study area vs occurrences vs WS cells)
-envs1_plot <- env_space_plot(stack[[1]], "Study area environmental space")
-envs2_plot <- env_space_plot(stack[[2]], "Occurrences environmental space")
-envs3_plot <- env_space_plot(stack[[3]], "Well survey cells environmental space")
-combPlot <- envs1_plot + envs2_plot + envs3_plot
-ggsave('envSpacePlots.png', combPlot, height = 6, width = 15, dpi = 600)
+  envs1_plot <- env_space_plot(stack[[1]], env_space_gradient_colors)
+  envs2_plot <- env_space_plot(stack[[2]], env_space_gradient_colors)
+  envs3_plot <- env_space_plot(stack[[3]], env_space_gradient_colors)
+
+  combPlot <- envs1_plot + envs2_plot + envs3_plot
+  ggsave('envSpacePlots.png', combPlot, height = 6, width = 15, dpi = 600)
+
 }
+#### frequency plots #####
+d1 <- as.data.frame(myPCA$scores[, 1])
+d1$ax2 <- as.data.frame(myPCA$scores[, 2])
 
-hist(myPCA$scores[, pcaAxis],
-     breaks = ncol(env_space),
-     freq = F,
-     col = "grey",
-     border = FALSE,
-     xlim= c(xmin, xmax),
-     ylim = c(ymin, ymax),
-     main = "",
-     xlab = "PC1",
-     font = 2, font.lab = 2,
-     cex.lab = 1.2, cex.axis = 1.2)
-lines(density(na.omit(myPCA$scores[, pcaAxis])), col = "black", lwd = 2)
+dd1 <- ggplot(d1, aes(x = myPCA$scores[, 1])) +
+  geom_density(fill = "grey", alpha = 0.7, color = "black") +
+  theme_void() +
+  theme(plot.margin = margin(0, 0, 0, 0))
 
-hist(coords_All[, pcaAxis],
-     add = TRUE,
-     col = rgb(1, 0, 0, .5),
-     freq = F,
-     border = FALSE)
-lines(density(na.omit(coords_All[, pcaAxis])), col = "red", lwd = 2)
-
-#### histograms #####
-d2 <- as.data.frame(myPCA$scores[, 2])
-D2_plot <- ggplot(d2) +
-  aes(x = `myPCA$scores[, 2]`) +
-  geom_histogram(bins = 30L, fill = "#61779E") +
-  labs(x = " ", y = " ") +
-  theme_minimal() +
+dd2 <- ggplot(d2, aes(x = myPCA$scores[, 2])) +
+  geom_density(fill = "grey", alpha = 0.7, color = "black") +
+  theme_void() +
+  theme(plot.margin = margin(0, 0, 0, 0)) +
   coord_flip()
 
-d1 <- as.data.frame(myPCA$scores[, 1])
+egg::ggarrange(dd1, arr1,
+               nrow=2,
+               ncol=1,
+               widths=c(1,7)
+)
 
-D1_plot <- ggplot(d1) +
-  aes(x = `myPCA$scores[, 1]`) +
-  geom_histogram(bins = 30L, fill = "#61779E") +
-  labs(x = " ", y = " ") +
-  theme_minimal()
+rdf <- as.data.frame(stack[[2]], xy = TRUE)
+ggplot(rdf, aes(x = rdf$`Species Occurrences`)) +
+  geom_density(fill = "grey", alpha = 0.7, color = "black") +
+  theme_void() +
+  theme(plot.margin = margin(0, 0, 0, 0)) +
+  coord_flip()
 
-(env_rast_plot | D2_plot)/ (D1_plot|lay) + plot_layout(nrow = 2, widths = c(1, 1,1))
 
 
-aligned <- align_plots(D1_plot, env_rast_plot, align = "v", axis = "l")
-
-ggdraw() +
-  draw_plot(aligned[[1]], x = 0, y = 0, width = 0.2, height = 0.8) +
-  draw_plot(aligned[[2]], x = 0.2, y = 0, width = 0.8, height = 0.8)
-
-# env_space_plot_with_histograms <- function(rdata, title) {
-#   # Convertir raster a data frame
-#   rdf <- as.data.frame(stack[[1]], xy = TRUE)
-#   var_name <- names(stack[[1]])[1]
-#
-#   main_plot <- ggplot(rdf, aes(x = x, y = y)) +
-#     geom_raster(aes(fill = .data[[var_name]])) +
-#     scale_fill_viridis_c(na.value = "transparent", name = var_name) +
-#     ggtitle('title') +
-#     scale_y_continuous(labels = simple_labels) +
-#     scale_x_continuous(labels = simple_labels) +
-#     theme_minimal() +
-#     theme(
-#       plot.margin = margin(t = 40, r = 40, b = 40, l = 40),
-#       legend.position = 'none'
-#     )
-#   ext <- ext(rdata)
-#   x_limits <- c(ext$xmin, ext$xmax)
-#   y_limits <- c(ext$ymin, ext$ymax)
-#   # Gráfico de densidad para el eje X
-#   x_density <- ggplot(rdf, aes(x = x)) +
-#     geom_density(fill = "blue", alpha = 0.3, color = "darkblue", linewidth = 0.8) +
-#     scale_x_continuous(limits = x_limits) +
-#     theme_void() +
-#     theme(plot.margin = margin(t = 0, r = 40, b = 0, l = 40))
-#
-#   # Gráfico de densidad para el eje Y
-#   y_density <- ggplot(rdf, aes(x = y)) +
-#     geom_density(color = "black", fill="grey", linewidth = 0.8) +
-#     scale_x_continuous(limits = y_limits) +
-#     theme_void() +
-#     theme(plot.margin = margin(t = 0, r = 40, b = 0, l = 40)) +
-#     coord_flip()
-#
-#   aligned_plots <- align_plots(
-#     main_plot, y_density, x_density,
-#     align = "hv",
-#     axis = "tblr"
-#   )
-#   # Combinar todo
-#   plot_grid(
-#     main_plot,
-#     y_density,
-#     x_density,
-#     NULL,
-#     nrow = 2, ncol = 2,
-#     rel_widths = c(4, 1),
-#     rel_heights = c(4,1),
-#     align = "hv", axis = "tblr"
-#   )
-# }
-#
-# envs1_plotb <- env_space_plot_with_histograms(stack[[1]], "Madagascar environmental space")
-# ggplot(rdf, aes(x = x)) +
-#   geom_density(fill = "blue", alpha = 0.3, color = "darkblue", linewidth = 0.8) +
-#   theme_void() +
-#   theme(plot.margin = margin(t = 0, r = 0, b = 0, l = 0))
 
 ## rarity ####
-hist(area_values01,
-     breaks = ncol(env_space),
-     freq = FALSE, col = "grey",
-     main = "",
-     xlab = "Climate rarity", border = FALSE,
-     ylim = c(0, 4),
-     font = 2, font.lab = 2,
-     cex.lab = 1.6, cex.axis = 1.6)
-lines(density(na.omit(area_values01)), col = "black", lwd = 2)
+# Rarity map plot
+rarity_plotMap <- function(){
+  rarity_palette <- colorRampPalette(c( "#8B8B7A","#CDCDB4", "#FFFFE0",
+                                       "#FFC0CB",  "#CD6889", "#8B475D"))
+  rarity_gradient_colors <- rarity_palette(100)
+  envspace_rarity_plot <- env_space_plot(stack[[4]], rarity_gradient_colors)
 
-hist(area_values01[surface > 0],
-     breaks = 5,
-     freq = FALSE,
-     add = TRUE,
-     col = rgb(0, 1, 0, .5),
-     border = FALSE)
-lines(density(na.omit(area_values01[surface > 0])), col = "lightgreen", lwd = 2)
+  rarPlot <- ggplot() +
+    geom_spatraster(data = rarity_map, aes(fill = after_stat(value))) +
+    scale_fill_gradientn(colours = rarity_gradient_colors,
+                        na.value = "transparent", name ='') +
+    geom_sf(data = WS_cent, color = "black", size = 3) +
+    theme_minimal() +
+    labs(title = 'Rarity map') +
+    theme(plot.background = element_rect(fill = "white", color = "transparent"),
+          legend.position = "none",
+          plot.title = element_text(size = 16, face = "bold", hjust = 1.1))
 
-rarity_env <- env_space
-values(rarity_env) <- area_values01
-rarity_Percell <- raster::extract(rarity_env, v4)
-rarity_map <- r
-values(rarity_map) <- rarity_Percell
+  combPlot2 <- envspace_rarity_plot + rarPlot
+  ggsave('rarity_Plots.png', combPlot2, height = 6, width = 12, dpi = 600)
+} ## add histograms aligned
+#### frequency plots
+# hist(area_values01,
+#      breaks = ncol(env_space),
+#      freq = FALSE, col = "grey",
+#      main = "",
+#      xlab = "Climate rarity", border = FALSE,
+#      ylim = c(0, 4),
+#      font = 2, font.lab = 2,
+#      cex.lab = 1.6, cex.axis = 1.6)
+# lines(density(na.omit(area_values01)), col = "black", lwd = 2)
+#
+# hist(area_values01[surface > 0],
+#      breaks = 5,
+#      freq = FALSE,
+#      add = TRUE,
+#      col = rgb(0, 1, 0, .5),
+#      border = FALSE)
+# lines(density(na.omit(area_values01[surface > 0])), col = "lightgreen", lwd = 2)
 
-cols <- colorRampPalette(c('#e0f3db','#a8ddb5','#43a2ca'))
-x11()
-plot(rarity_map,
-     col = cols(10),
-     font = 2, font.lab = 2,
-     ylim = c(ymin(base), ymax(base)),
-     xlim = c(xmin(base), xmax(base))
-)
-maps::map(base, add = TRUE)
-points(WS_cent, col = rgb(1, 0, 0, .5), pch = 19, cex = 1)
+
+
+
+
+
 

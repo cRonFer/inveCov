@@ -47,12 +47,9 @@ inventory_completeness <- function(data,
             legend.position = "none",
             plot.title = element_text(size = 16, face = "bold", hjust = 1.1))
   }
-
-
  # Study area shpfiles
   study_area_pol_crs <- st_transform(study_area_pol, crs)
   data(adworld) # knowBR needs add world polygon to work
-
   # Create working directory
   create_and_set_directory <- function(dir_e) {
     # Create directory if it doesn't exist
@@ -114,17 +111,23 @@ inventory_completeness <- function(data,
   comp_shp <- comp_shp %>%
     filter(!is.na(Completeness)) %>%
     st_transform(crs)
-  # Filter est dataset selecting WELL-SURVEY CELLS:
+  # Filter est dataset selecting WELL-SURVEYED CELLS:
   estWS <- comp_shp %>% filter(Records >= Records_t) %>%
     filter(Ratio >= Ratio_t) %>%
     filter(Slope <= Slope_t) %>%
     filter(Completeness >= Completeness_t)
+  # Assign directly to global environment
+  assign("estWS", estWS, envir = .GlobalEnv)
+  return(invisible(NULL))  # Return nothing
+
   # Map of Completeness
   WS_map <- complt_plotMap(dir_e)
   ggsave('wellSurveyCells_Map.png', WS_map, dpi = 500, width = 6, height = 8)
 
   # Extract centroids of Well Survey cells for the environmental Space analysis
   WS_cent <- st_centroid(estWS)
+  assign("WS_cent", WS_cent, envir = .GlobalEnv)
+  return(invisible(NULL))
   WS_cent_dt <- WS_cent %>% dplyr::mutate(lon = sf::st_coordinates(.)[,1],
                                        lat = sf::st_coordinates(.)[,2]) %>%
     dplyr::select(c(cell_id, lon, lat))

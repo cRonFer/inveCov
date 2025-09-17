@@ -1,20 +1,18 @@
 env_space_calc <- function(env_space_res,
                            replications,
-                           rarity_test = FALSE){
+                           rarity_test = TRUE){
 # Standardization of the variables (Normalization - Mean= 0 and Std= 1)
 std <- function(x){(x - mean(x, na.rm = T)) / sd(x, na.rm = T)}
 # Schoener's D: quantifies the overlap between the location of well-sampled
 # sites and cells with most frequent conditions
 # The Schoener's D index varies from zero (total lack of congruence) to one
 # (total congruence) indicating that the location of well-sampled
-# sites coincide with climate conditions
-# that are frequently found in the study area
+# sites coincide with climate conditions that are frequently found in the study area
 SchoenersD <- function(x, y) {
   sub_values <- abs(x - y)
   D <- 1 - (sum(sub_values, na.rm = TRUE) / 2)
   return(D)
 }
-
 # Function to extract and save test statistics
 save_kruskal_csv <- function(formula, filename = "kruskal_stats.txt"){
   result <- kruskal.test(formula)
@@ -32,6 +30,49 @@ save_kruskal_csv <- function(formula, filename = "kruskal_stats.txt"){
   write.csv(results_df, filename, row.names = FALSE)
   message(paste("Results saved to:", filename))
   return(results_df)
+}
+# Rarity analysis
+rarity_calc <- function(){
+  surface <- WS_values
+  surface[is.na(area_values) | area_values == 0] <- NA
+  sampled <- sum(surface > 0, na.rm = TRUE) /
+    sum(surface >= 0, na.rm = TRUE) * 100
+  percen <- round(sampled, 2)
+  prin <- paste0(percen, "% of our study area climate types covered by well-sampled cells")
+  print(prin)
+  # Is this env. space sampled corresponding to rare climates?
+  # First, we make values vary from 0 to 1 according to their rarity:
+  # Values close to 0, are very common, values close to 1 very rare
+  mini <- min(area_values, na.rm = TRUE) # less frequent value
+  # rarity index, also called Min-Max scalling
+  area_values01 <- abs(1 - (area_values - mini) /
+                         (max(area_values, na.rm = TRUE) - mini))
+  # see http://rasbt.github.io/mlxtend/user_guide/preprocessing/minmax_scaling/
+
+  # Kruskal-Wallis test to see if the distribution of rarities for the sampled
+  # occurrences differs from the distribution observed in the entire area
+  x_kw <- c(area_values01, area_values01[surface > 0])
+  g_kw <- as.factor(c(rep("area", length(area_values01)),
+                      rep("ws", length(area_values01[surface > 0]))))
+  save_kruskal_csv(x_kw ~ g_kw, "rarity_kruskal_Wallis_stats.txt")
+  # Kolmogorov smirnov test
+  area_values03 <- na.omit(area_values01)
+  area_values04 <- na.omit(area_values01[surface > 0])
+  writeLines(capture.output(
+    ks.test(area_values03, area_values04)),
+    paste('Axis', pcaAxis, "rarity_ks_two_sample.txt"))
+
+  # Finally MAP the climatic rarity
+  rarity_env <- env_space
+
+  stack <- c(stack, rarity_env) # Join the new raster from order
+  names(stack[[4]]) <- 'Rarity index'
+
+  values(rarity_env) <- area_values01
+  rarity_Percell <- extract(rarity_env, v4)
+  rarity_map <- climRaster_res[[1]]
+  values(rarity_map) <- rarity_Percell
+  return(rarity_map)
 }
 # PCA  ####
 # First we can reduce the variables to fewer variables using a PCA.
@@ -52,7 +93,7 @@ myPCA <- principal(PCAdata2,
 # prop.table(myPCA$values)
 
 # Values of PCA of our study area ####
-# Instead of assuming the absolute values of all Worldclim variables,
+# Instead of assuming the absolute values of all bioclimatic variables,
 # the next map assumes values of the linear combinations between these variables (PCA scores).
 v3 <- v2[, 1:2] # create a vector with the same length as v2 but 2 columns
 v3[!rem, ] <- myPCA$scores # insert PCA_scores (2axis-2columns) to the new vector
@@ -92,7 +133,7 @@ values(env_space_area) <- area_values
 stack <- env_space_area
 
 # Env. Space of all occurrences of order
-data_points <- vect(data_points)
+# data_points <- vect(data_points)
 values_All <- cells(climRaster_res,
                         data_points)[, 2]
 coords_All <- v4[values_All, ]
@@ -110,7 +151,8 @@ names(stack[[2]]) <- 'Species Occurrences'
 
 # Well surveyed cells #########
 # Env. Space of all occurrences of order
-values_WS <- cells(climRaster_res, WS_cent)[, 2]
+estWS <- vect(estWS)
+values_WS <- cells(climRaster_res, estWS)[, 2]
 coords_WS <- v4[values_WS, ]
 cell_WS <- extract(env_space,
                       coords_WS,
@@ -122,9 +164,12 @@ env_space_WS[env_space_WS == 0] <- NA
 all_WS <- unique(cell_WS)
 stack <- c(stack, env_space_WS) # Join the new raster from order
 names(stack[[3]]) <- 'Well Surveyed cells'
-
+return(stack)
+# assign('stack', stack, envir = .GlobalEnv)
 # Plot environmental spaces
 env_space_plot()
+
+
 # Schoener's D ####
 # Transform the abundance of each cell into probabilities.
 # Relative frequency of climate type for all the study area
@@ -134,8 +179,8 @@ WS_values <- values(env_space_All)
 WS_values <- WS_values/sum(WS_values, na.rm = TRUE)
 
 D <- SchoenersD(area_values, WS_values)
-print(paste("Climate overlap between well-sampled cells and the study area,
-            given by the observed Schoener's D equals = ",
+print(paste("Climate overlap between well-sampled cells and the study area,",
+            "given by the observed Schoener's D equals = ",
             round(D,3), "%"))
 
 # We create a null model to test if D values is different from a
@@ -174,8 +219,12 @@ for (pcaAxis in 1:2){
    ks.test(myPCA$scores[, pcaAxis], coords_WS[, pcaAxis])),
       paste('Axis', pcaAxis, "ks_two_sample.txt"))
 }
+# Rarity test ####
+if (rarity_test){
+      rarity_calc()
+      rarity_plotMap()
+  }else{
+  print("Processing enronmental coverage without rarity analysis")
+  }
 
-if rarity_test TRUE{
-  rarity_calc()
-}
 }
