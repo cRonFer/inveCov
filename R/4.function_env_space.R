@@ -74,9 +74,10 @@ rarity_calc <- function(){
   values(rarity_map) <- rarity_Percell
   return(rarity_map)
 }
+# Create working directory
+create_and_set_directory('envCoverage_analysis')
 # PCA  ####
 # First we can reduce the variables to fewer variables using a PCA.
-# Here we standardize and prepare the data.
 v <- as.data.frame(values(climRaster_res)) # get env values from rasters
 # str(v)
 v2 <- apply(v, 2, std) # apply standardization function to dataframe of climate values
@@ -133,7 +134,10 @@ values(env_space_area) <- area_values
 stack <- env_space_area
 
 # Env. Space of all occurrences of order
-# data_points <- vect(data_points)
+data_points <- sf::st_as_sf(data,
+       coords = c("Longitude", "Latitude"),
+        crs = 4326)
+data_points <- vect(data_points)
 values_All <- cells(climRaster_res,
                         data_points)[, 2]
 coords_All <- v4[values_All, ]
@@ -164,11 +168,9 @@ env_space_WS[env_space_WS == 0] <- NA
 all_WS <- unique(cell_WS)
 stack <- c(stack, env_space_WS) # Join the new raster from order
 names(stack[[3]]) <- 'Well Surveyed cells'
-return(stack)
-# assign('stack', stack, envir = .GlobalEnv)
+assign('stack', stack, envir = .GlobalEnv)
 # Plot environmental spaces
 env_space_plot()
-
 
 # Schoener's D ####
 # Transform the abundance of each cell into probabilities.

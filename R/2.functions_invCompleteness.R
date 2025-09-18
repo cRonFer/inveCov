@@ -40,7 +40,7 @@ inventory_completeness <- function(data,
       geom_sf(data = comp_shp, aes(fill = Completeness), color = "transparent") +
       geom_sf(data = estWS, fill = 'transparent', color = "black", linewidth = 1) +
       scale_fill_viridis_c(limits = c(0, 100), option = "plasma", name = "",
-                           direction = -1) +
+                           direction = -1, alpha = 0.6) +
       theme_minimal() +
       labs(title = title)+
       theme(plot.background = element_rect(fill = "white", color = "transparent"),
@@ -51,21 +51,6 @@ inventory_completeness <- function(data,
   study_area_pol_crs <- st_transform(study_area_pol, crs)
   data(adworld) # knowBR needs add world polygon to work
   # Create working directory
-  create_and_set_directory <- function(dir_e) {
-    # Create directory if it doesn't exist
-    if (!dir.exists(dir_e)) {
-      dir.create(dir_e, recursive = TRUE)
-      message(paste("Directory created:", dir_e))
-    } else {
-      message(paste("Directory already exists:", dir_e))
-    }
-
-    # Set the working directory using here::here()
-    setwd(dir_e)
-    message(paste("Working directory set to:", getwd()))
-
-    return(getwd())
-    }
   create_and_set_directory(dir_e)
 
   # Create grid
@@ -118,7 +103,6 @@ inventory_completeness <- function(data,
     filter(Completeness >= Completeness_t)
   # Assign directly to global environment
   assign("estWS", estWS, envir = .GlobalEnv)
-  return(invisible(NULL))  # Return nothing
 
   # Map of Completeness
   WS_map <- complt_plotMap(dir_e)
@@ -127,7 +111,7 @@ inventory_completeness <- function(data,
   # Extract centroids of Well Survey cells for the environmental Space analysis
   WS_cent <- st_centroid(estWS)
   assign("WS_cent", WS_cent, envir = .GlobalEnv)
-  return(invisible(NULL))
+
   WS_cent_dt <- WS_cent %>% dplyr::mutate(lon = sf::st_coordinates(.)[,1],
                                        lat = sf::st_coordinates(.)[,2]) %>%
     dplyr::select(c(cell_id, lon, lat))

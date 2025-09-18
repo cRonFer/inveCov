@@ -28,35 +28,32 @@ env_space_plot <- function(rdata, pal_col){
 
 }
 #### frequency plots #####
-d1 <- as.data.frame(myPCA$scores[, 1])
-d1$ax2 <- as.data.frame(myPCA$scores[, 2])
+# d1 <- as.data.frame(myPCA$scores[, 1])
+# d1$ax2 <- as.data.frame(myPCA$scores[, 2])
+#
+# dd1 <- ggplot(d1, aes(x = myPCA$scores[, 1])) +
+#   geom_density(fill = "grey", alpha = 0.7, color = "black") +
+#   theme_void() +
+#   theme(plot.margin = margin(0, 0, 0, 0))
+#
+# dd2 <- ggplot(d2, aes(x = myPCA$scores[, 2])) +
+#   geom_density(fill = "grey", alpha = 0.7, color = "black") +
+#   theme_void() +
+#   theme(plot.margin = margin(0, 0, 0, 0)) +
+#   coord_flip()
 
-dd1 <- ggplot(d1, aes(x = myPCA$scores[, 1])) +
-  geom_density(fill = "grey", alpha = 0.7, color = "black") +
-  theme_void() +
-  theme(plot.margin = margin(0, 0, 0, 0))
-
-dd2 <- ggplot(d2, aes(x = myPCA$scores[, 2])) +
-  geom_density(fill = "grey", alpha = 0.7, color = "black") +
-  theme_void() +
-  theme(plot.margin = margin(0, 0, 0, 0)) +
-  coord_flip()
-
-egg::ggarrange(dd1, arr1,
-               nrow=2,
-               ncol=1,
-               widths=c(1,7)
-)
-
-rdf <- as.data.frame(stack[[2]], xy = TRUE)
-ggplot(rdf, aes(x = rdf$`Species Occurrences`)) +
-  geom_density(fill = "grey", alpha = 0.7, color = "black") +
-  theme_void() +
-  theme(plot.margin = margin(0, 0, 0, 0)) +
-  coord_flip()
-
-
-
+# egg::ggarrange(dd1, arr1,
+#                nrow=2,
+#                ncol=1,
+#                widths=c(1,7)
+# )
+#
+# rdf <- as.data.frame(stack[[2]], xy = TRUE)
+# ggplot(rdf, aes(x = rdf$`Species Occurrences`)) +
+#   geom_density(fill = "grey", alpha = 0.7, color = "black") +
+#   theme_void() +
+#   theme(plot.margin = margin(0, 0, 0, 0)) +
+#   coord_flip()
 
 ## rarity ####
 # Rarity map plot
